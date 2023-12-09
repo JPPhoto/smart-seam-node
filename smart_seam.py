@@ -3,8 +3,6 @@
 from typing import Literal
 
 import numpy as np
-from PIL import Image
-
 from invokeai.app.invocations.baseinvocation import (
     BaseInvocation,
     InputField,
@@ -15,6 +13,7 @@ from invokeai.app.invocations.baseinvocation import (
 )
 from invokeai.app.invocations.primitives import ImageField, ImageOutput
 from invokeai.app.services.image_records.image_records_common import ImageCategory, ResourceOrigin
+from PIL import Image
 
 
 @invocation("smart_seam", title="Smart Seam", tags=["image"], version="1.0.0")
@@ -52,13 +51,9 @@ class SmartSeamInvocation(BaseInvocation, WithMetadata, WithWorkflow):
             ia = np.rot90(ia, 1)
 
         # array is y by x
-        max_y = ia.shape[0]
-        max_x = ia.shape[1]
+        max_y, max_x = ia.shape
 
-        print("SHAPE:")
-        print(ia.shape)
-
-        energy = abs(np.gradient(ia)[1]) + abs(np.gradient(ia)[0])
+        energy = abs(np.gradient(ia, axis=0)) + abs(np.gradient(ia, axis=1))
 
         res = np.copy(energy)
 
@@ -78,7 +73,6 @@ class SmartSeamInvocation(BaseInvocation, WithMetadata, WithWorkflow):
 
         # create an array max_y long
         lowest_energy_line = np.empty([max_y], dtype="uint16")
-
         lowest_energy_line[max_y - 1] = lowest_pos
 
         for ypos in range(max_y - 2, -1, -1):
@@ -89,10 +83,10 @@ class SmartSeamInvocation(BaseInvocation, WithMetadata, WithWorkflow):
             yvall = energy[ypos, lowest_pos - 1] if lowest_pos > 1 else np.Inf
             yvalr = energy[ypos, lowest_pos + 1] if lowest_pos < (max_x - 1) else np.Inf
             # if the value to the left is lower energy, pick that path...
-            if yvall < yval:
+            if yvall < yval and yvalr >= yval:
                 lowest_pos = lpos
             # if the value to the right is lower energy, pick that path...
-            if yvalr < yval:
+            if yvalr < yval and yvall >= yval:
                 lowest_pos = rpos
             lowest_energy_line[ypos] = lowest_pos
 
