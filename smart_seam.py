@@ -8,7 +8,6 @@ from invokeai.app.invocations.baseinvocation import (
     InputField,
     InvocationContext,
     WithMetadata,
-    WithWorkflow,
     invocation,
 )
 from invokeai.app.invocations.primitives import ImageField, ImageOutput
@@ -17,7 +16,7 @@ from PIL import Image
 
 
 @invocation("smart_seam", title="Smart Seam", tags=["image"], version="1.0.0")
-class SmartSeamInvocation(BaseInvocation, WithMetadata, WithWorkflow):
+class SmartSeamInvocation(BaseInvocation, WithMetadata):
     """Determines a smart seam between two images"""
 
     left_top_image: ImageField = InputField(description="The left or top image", title="Left/Top Image")
@@ -119,7 +118,7 @@ class SmartSeamInvocation(BaseInvocation, WithMetadata, WithWorkflow):
             session_id=context.graph_execution_state_id,
             is_intermediate=self.is_intermediate,
             metadata=self.metadata,
-            workflow=self.workflow,
+            workflow=context.workflow,
         )
 
         return ImageOutput(
