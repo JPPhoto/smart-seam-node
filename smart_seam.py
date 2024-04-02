@@ -1,18 +1,17 @@
-# Copyright (c) 2023 Jonathan S. Pollack (https://github.com/JPPhoto)
+# Copyright (c) 2024 Jonathan S. Pollack (https://github.com/JPPhoto)
 
 from typing import Literal
 
 import numpy as np
+from PIL import Image
+
 from invokeai.app.invocations.baseinvocation import (
     BaseInvocation,
-    InputField,
-    InvocationContext,
-    WithMetadata,
     invocation,
 )
-from invokeai.app.invocations.primitives import ImageField, ImageOutput
-from invokeai.app.services.image_records.image_records_common import ImageCategory, ResourceOrigin
-from PIL import Image
+from invokeai.app.invocations.fields import ImageField, InputField, WithMetadata
+from invokeai.app.invocations.primitives import ImageOutput
+from invokeai.app.services.shared.invocation_context import InvocationContext
 
 
 @invocation("smart_seam", title="Smart Seam", tags=["image"], version="1.0.0")
@@ -103,26 +102,13 @@ class SmartSeamInvocation(BaseInvocation, WithMetadata):
         return image
 
     def invoke(self, context: InvocationContext) -> ImageOutput:
-        left_top_image = context.services.images.get_pil_image(self.left_top_image.image_name)
+        left_top_image = context.images.get_pil(self.left_top_image.image_name)
         left_top_image = left_top_image.convert("RGB")
-        right_bottom_image = context.services.images.get_pil_image(self.right_bottom_image.image_name)
+        right_bottom_image = context.images.get_pil(self.right_bottom_image.image_name)
         right_bottom_image = right_bottom_image.convert("RGB")
 
         image = self.get_seam_line(left_top_image, right_bottom_image, self.mode == "Top/Bottom")
 
-        image_dto = context.services.images.create(
-            image=image,
-            image_origin=ResourceOrigin.INTERNAL,
-            image_category=ImageCategory.GENERAL,
-            node_id=self.id,
-            session_id=context.graph_execution_state_id,
-            is_intermediate=self.is_intermediate,
-            metadata=self.metadata,
-            workflow=context.workflow,
-        )
+        image_dto = context.images.save(image=image)
 
-        return ImageOutput(
-            image=ImageField(image_name=image_dto.image_name),
-            width=image_dto.width,
-            height=image_dto.height,
-        )
+        return ImageOutput.build(image_dto)
