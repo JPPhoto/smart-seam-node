@@ -5,16 +5,18 @@ from typing import Literal
 import numpy as np
 from PIL import Image
 
-from invokeai.app.invocations.baseinvocation import (
+from invokeai.invocation_api import (
     BaseInvocation,
+    ImageField,
+    ImageOutput,
+    InputField,
+    InvocationContext,
+    WithMetadata,
     invocation,
 )
-from invokeai.app.invocations.fields import ImageField, InputField, WithMetadata
-from invokeai.app.invocations.primitives import ImageOutput
-from invokeai.app.services.shared.invocation_context import InvocationContext
 
 
-@invocation("smart_seam", title="Smart Seam", tags=["image"], version="1.0.0")
+@invocation("smart_seam", title="Smart Seam", tags=["image"], version="1.0.1")
 class SmartSeamInvocation(BaseInvocation, WithMetadata):
     """Determines a smart seam between two images"""
 
